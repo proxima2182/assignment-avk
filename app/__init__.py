@@ -7,6 +7,7 @@ from flask_restx import Api
 load_dotenv('../.env')
 
 app = Flask(__name__)
+app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 api = Api(app, version='1.0', title='API 문서', description='Swagger 문서', doc="/api-docs")
 
 from app import routes

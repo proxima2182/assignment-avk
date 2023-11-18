@@ -27,7 +27,7 @@ class Database:
     @staticmethod
     def read(table_name, id):
         def callback(conn, cursor):
-            cursor.execute(f"SELECT * FROM {table_name} where id = ?", [id])
+            cursor.execute(f"SELECT * FROM {table_name} where id = {id}")
             return cursor.fetchall()
 
         rows = execute_sql(callback)
@@ -118,18 +118,19 @@ class Database:
             values = []
             prefix = ""
             for column in columns:
-                query += prefix + f"{column}=?"
-                values.append(data[column])
-                prefix = ","
+                if column is not 'id':
+                    query += prefix + f"{column}=?"
+                    values.append(data[column])
+                    prefix = ","
 
-            cursor.execute(f"UPDATE {table_name} SET {query} WHERE id= ?", values + [id])
+            cursor.execute(f"UPDATE {table_name} SET {query} WHERE id = {id}", values)
 
         return execute_sql_transaction(callback)
 
     @staticmethod
     def delete(table_name, id):
         def callback(conn, cursor):
-            cursor.execute(f"DELETE FROM {table_name}  WHERE id = ?", [id])
+            cursor.execute(f"DELETE FROM {table_name} WHERE id = {id}")
 
         return execute_sql(callback)
 

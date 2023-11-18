@@ -4,7 +4,7 @@ from functools import wraps
 
 import pandas as pd
 from flask import Response, request
-from flask_restx import Resource
+from flask_restx import Resource, fields
 
 from app import api
 from app.database import Database
@@ -16,14 +16,39 @@ def as_json(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         res = f(*args, **kwargs)
-        res = json.dumps(res, ensure_ascii=False).encode('utf8')
-        return Response(res, content_type='application/json; charset=utf-8')
+        res_string = res
+        code = 200
+        if 'success' not in res and len(res) > 1:
+            res_string = res[0]
+            code = res[1]
+        res_string = json.dumps(res_string, ensure_ascii=False).encode('utf8')
+        return Response(res_string, status=code, content_type='application/json; charset=utf-8')
 
     return decorated_function
 
 
+api_update_user_fields = api.model('UpdateUser', {
+    'created': fields.String(description="DateTime", default="yyyy-MM-dd HH:mm:ss"),
+    # 'created': fields.DateTime,
+    'name': fields.String(max_length=100),
+    'content': fields.String,
+})
+api_user_fields = api.inherit('User', api_update_user_fields, {
+    'id': fields.Integer,
+})
+result_fields = api.model('Result', {
+    'success': fields.Boolean(default=True),
+    'reason': fields.String(description='optional, appear if (\'success\' = False)'),
+})
+user_result_fields = api.inherit('UserDataResult', result_fields, {
+    'data': fields.Nested(api_user_fields, allow_null=True, description='optional, disappear if (\'success\' = False)'),
+})
+
+
 @assignment_api.route('/read/<int:id>')
+@assignment_api.doc(params={'id': '조회 하고자 하는 row 의 id'})
 class Read(Resource):
+    @api.response(200, 'Success', user_result_fields)
     @as_json
     def get(self, id):
         response = {
@@ -50,6 +75,8 @@ class Read(Resource):
 
 @assignment_api.route('/create')
 class Create(Resource):
+    @api.expect([api_user_fields])
+    @api.response(200, 'Success', result_fields)
     @as_json
     def post(self):
         response = {
@@ -75,7 +102,10 @@ class Create(Resource):
 
 
 @assignment_api.route('/update/<int:id>')
+@assignment_api.doc(params={'id': '업데이트 하고자 하는 row 의 id'})
 class Create(Resource):
+    @api.expect(api_update_user_fields)
+    @api.response(200, 'Success', result_fields)
     @as_json
     def put(self, id):
         response = {
@@ -97,7 +127,9 @@ class Create(Resource):
 
 
 @assignment_api.route('/delete/<int:id>')
+@assignment_api.doc(params={'id': '삭제 하고자 하는 row 의 id'})
 class Create(Resource):
+    @api.response(200, 'Success', result_fields)
     @as_json
     def delete(self, id):
         response = {
@@ -115,8 +147,3 @@ class Create(Resource):
                 'reason': type(e).__name__,
             })
         return response
-
-# @assignment_api.get('/insert_test')
-# def insert_test():
-#     # print(Remote.getShops())
-#     values = [];
