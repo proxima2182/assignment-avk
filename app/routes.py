@@ -55,14 +55,36 @@ class Create(Resource):
         response = {
             'success': False,
         }
-        data = request.json.get('data')
+        data = request.json
         # data = [
         #     {"created": datetime(2023, 1, 1, 12, 0, 0), "name": "John", "content": b'something'},
         #     {"created": datetime(2023, 1, 2, 12, 0, 0), "name": "Alice", "content": b'anything'},
         # ]
 
         try:
-            Database.write_bulk('user', pd.DataFrame.from_dict(data=data, orient='columns'))
+            Database.insert_bulk('user', pd.DataFrame.from_dict(data=data, orient='columns'))
+            response.update({
+                'success': True
+            })
+        except Exception as e:
+            traceback.print_exc()
+            response.update({
+                'reason': type(e).__name__,
+            })
+        return response
+
+
+@assignment_api.route('/update/<int:id>')
+class Create(Resource):
+    @as_json
+    def put(self, id):
+        response = {
+            'success': False,
+        }
+        data = request.json
+
+        try:
+            Database.update("user", id, data)
             response.update({
                 'success': True
             })

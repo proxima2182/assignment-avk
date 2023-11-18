@@ -27,7 +27,7 @@ class Database:
     @staticmethod
     def read(table_name, id):
         def callback(conn, cursor):
-            cursor.execute(f"SELECT * FROM {table_name} where id = %s", [id])
+            cursor.execute(f"SELECT * FROM {table_name} where id = ?", [id])
             return cursor.fetchall()
 
         rows = execute_sql(callback)
@@ -46,14 +46,11 @@ class Database:
         return json_data
 
     @staticmethod
-    def write_bulk(table_name, data, chunk_size=1000):
-        def callback(conn, cursor, *args):
-            if len(args) == 0:
-                raise InternalProgrammingError("Wrong Data Input")
-            frame = args[0]
+    def insert_bulk(table_name, data, chunk_size=1000):
+        def callback(conn, cursor):
             table_columns = get_columns(table_name)
+            data_columns = data.keys().values
             columns = []
-            data_columns = frame.keys().values
 
             for tc in table_columns:
                 if len(np.where(data_columns == tc)[0]) != 0:
@@ -61,7 +58,7 @@ class Database:
             # column 이 하나도 매치 되지 않는 경우 custom error throw
             if len(columns) == 0:
                 raise InternalProgrammingError("Wrong Data Input")
-            frame = frame[columns]
+            frame = data[columns]
 
             column_query = ""
             value_query = ""
@@ -100,12 +97,39 @@ class Database:
                         chunk_values = np.concatenate((chunk_values, x), axis=0)
                 cursor.execute(query, tuple(chunk_values))
 
-        return execute_sql_transaction(callback, data)
+        return execute_sql_transaction(callback)
+
+    @staticmethod
+    def update(table_name, id, data):
+        def callback(conn, cursor):
+            table_columns = get_columns(table_name)
+            data_columns = list(data.keys())
+            columns = []
+
+            for tc in table_columns:
+                if tc in data_columns:
+                    columns.append(tc)
+
+            # column 이 하나도 매치 되지 않는 경우 custom error throw
+            if len(columns) == 0:
+                raise InternalProgrammingError("Wrong Data Input")
+
+            query = ""
+            values = []
+            prefix = ""
+            for column in columns:
+                query += prefix + f"{column}=?"
+                values.append(data[column])
+                prefix = ","
+
+            cursor.execute(f"UPDATE {table_name} SET {query} WHERE id= ?", values + [id])
+
+        return execute_sql_transaction(callback)
 
     @staticmethod
     def delete(table_name, id):
         def callback(conn, cursor):
-            cursor.execute(f"DELETE FROM {table_name}  WHERE id = %s", [id])
+            cursor.execute(f"DELETE FROM {table_name}  WHERE id = ?", [id])
 
         return execute_sql(callback)
 
@@ -146,7 +170,7 @@ def execute_sql(callback):
     return result
 
 
-def execute_sql_transaction(callback, *args):
+def execute_sql_transaction(callback):
     if isinstance(pool, Exception):
         raise pool
         return
@@ -157,7 +181,7 @@ def execute_sql_transaction(callback, *args):
         conn = pool.get_connection()
         cursor = conn.cursor(prepared=True)
         conn.start_transaction()
-        result = callback(conn, cursor, *args)
+        result = callback(conn, cursor)
         conn.commit()
     except Exception as e:
         if conn is not None:
