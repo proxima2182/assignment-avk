@@ -1,9 +1,11 @@
+import math
 import os
 import traceback
 from datetime import datetime
 
 import mysql.connector
 import mysql.connector.pooling
+import numpy as np
 
 try:
     config = {
@@ -16,21 +18,19 @@ try:
     }
     pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="database", pool_size=3,
                                                        auth_plugin='mysql_native_password', **config)
-except Exception:
+except Exception as e:
+    pool = e
     traceback.print_exc()
 
 
 class Database:
     @staticmethod
-    def read(query, values=[]):
-        print("start >> query \"" + query + "\"")
-        if pool is None:
-            print("can't execute")
-            return
-        conn = pool.get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(query, values)
-        rows = cursor.fetchall()
+    def read(table_name, id):
+        def callback(conn, cursor):
+            cursor.execute(f"SELECT * FROM {table_name} where id = %s", [id])
+            return cursor.fetchall()
+
+        rows = execute_sql(callback)
         json_data = []
         for row in rows:
             data = {}
@@ -43,142 +43,136 @@ class Database:
                 else:
                     data[key] = value
             json_data.append(data)
-        cursor.close()
-        conn.close()
-        print("finish >> query \"" + query + "\"")
-        # return rows
         return json_data
 
-# def readBulk(query, values, chunk_size=20000):
-#     print("start >> query \"" + query + "\"")
-#     if pool is None:
-#         print("can't execute")
-#         return
-#     offset = 0
-#     result = pd.DataFrame()
-#     previous_length = chunk_size
-#     while previous_length == chunk_size:
-#         conn = pool.get_connection()
-#         try:
-#             cursor = conn.cursor(dictionary=True)
-#             offset_query = query + " LIMIT " + str(chunk_size) + " OFFSET " + str(offset * chunk_size)
-#             print("read (" + str(offset) + ")")
-#             cursor.execute(offset_query, values)
-#             output = cursor.fetchall()
-#             outputs = [result, pd.DataFrame(output)]
-#             result = pd.concat(outputs)
-#             offset += 1
-#             previous_length = len(output)
-#             cursor.close()
-#         except Exception:
-#             traceback.print_exc()
-#         conn.close()
-#     print("finish >> query \"" + query + "\"")
-#     return result
-#
-#
-# def write(query, values):
-#     if pool is None:
-#         print("can't execute")
-#         return
-#     conn = pool.get_connection()
-#     try:
-#         cursor = conn.cursor(prepared=True)
-#         conn.start_transaction()
-#         if values is not None and isinstance(values, list):
-#             cursor.executemany(query, values)
-#         else:
-#             cursor.executemany(query, [values])
-#         conn.commit()
-#     except Exception:
-#         traceback.print_exc()
-#         conn.rollback()
-#     cursor.close()
-#     conn.close()
-#     return
-#
-#
-# def __getColumns(table_name):
-#     conn = pool.get_connection()
-#     try:
-#         cursor = conn.cursor(dictionary=True)
-#         cursor.execute(
-#             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'" + table_name + "' AND TABLE_SCHEMA = 'data_preprocessing' ORDER BY ORDINAL_POSITION",
-#             [])
-#         result = cursor.fetchall()
-#     except Exception:
-#         traceback.print_exc()
-#     cursor.close()
-#     conn.close()
-#
-#     result = [x['COLUMN_NAME'] for x in result]
-#
-#     return result
-#
-#
-# def writeBulk(table_name, frame, chunk_size=1000):
-#     if pool is None:
-#         print("can't execute")
-#         return
-#
-#     table_columns = __getColumns(pool, table_name)
-#     mat_columns = frame.keys().values
-#     columns = []
-#
-#     for tc in table_columns:
-#         if len(np.where(mat_columns == tc)[0]) != 0:
-#             columns.append(tc)
-#
-#     frame = frame[columns]
-#
-#     column_query = ""
-#     value_query = ""
-#     prefix = ""
-#     for column in columns:
-#         column_query += prefix + column
-#         value_query += prefix + "?"
-#         prefix = ","
-#
-#     base_query = "INSERT INTO " + table_name + "(" + column_query + ") VALUES"
-#     query = base_query
-#     # values = [tuple(x) for x in frame.values]
-#     values = np.array(frame.values, dtype=object).astype(str)
-#
-#     values_length = len(values)
-#     loop = math.floor(values_length / chunk_size)
-#     if values_length % chunk_size != 0:
-#         loop += 1
-#
-#     prefix = ""
-#     for i in range(chunk_size):
-#         query += prefix + "(" + value_query + ")"
-#         prefix = ","
-#
-#     conn = pool.get_connection()
-#     try:
-#         cursor = conn.cursor(prepared=True)
-#
-#         conn.start_transaction()
-#         for i in range(loop):
-#             chunk_values = []
-#             if i + 1 == loop:
-#                 query = base_query
-#                 prefix = ""
-#                 for j in range(values_length % chunk_size):
-#                     query += prefix + "(" + value_query + ")"
-#                     prefix = ","
-#                 # cursor.executemany(query, values[i * chunk_size:])
-#                 for x in values[i * chunk_size:]:
-#                     chunk_values = np.concatenate((chunk_values, x), axis=0)
-#             else:
-#                 for x in values[i * chunk_size:(i + 1) * chunk_size]:
-#                     chunk_values = np.concatenate((chunk_values, x), axis=0)
-#             cursor.execute(query, tuple(chunk_values))
-#
-#         conn.commit()
-#     except Exception:
-#         traceback.print_exc()
-#         conn.rollback()
-#     cursor.close()
-#     conn.close()
-#     return
+    @staticmethod
+    def write_bulk(table_name, data, chunk_size=1000):
+        def callback(conn, cursor, *args):
+            if len(args) == 0:
+                raise InternalProgrammingError("Wrong Data Input")
+            frame = args[0]
+            table_columns = get_columns(table_name)
+            columns = []
+            data_columns = frame.keys().values
+
+            for tc in table_columns:
+                if len(np.where(data_columns == tc)[0]) != 0:
+                    columns.append(tc)
+            # column 이 하나도 매치 되지 않는 경우 custom error throw
+            if len(columns) == 0:
+                raise InternalProgrammingError("Wrong Data Input")
+            frame = frame[columns]
+
+            column_query = ""
+            value_query = ""
+            prefix = ""
+            for column in columns:
+                column_query += prefix + column
+                value_query += prefix + "?"
+                prefix = ","
+
+            base_query = "INSERT INTO " + table_name + "(" + column_query + ") VALUES"
+            query = base_query
+            values = np.array(frame.values, dtype=object).astype(str)
+
+            values_length = len(values)
+            loop = math.floor(values_length / chunk_size)
+            if values_length % chunk_size != 0:
+                loop += 1
+
+            prefix = ""
+            for i in range(chunk_size):
+                query += prefix + "(" + value_query + ")"
+                prefix = ","
+
+            for i in range(loop):
+                chunk_values = []
+                if i + 1 == loop:
+                    query = base_query
+                    prefix = ""
+                    for j in range(values_length % chunk_size):
+                        query += prefix + "(" + value_query + ")"
+                        prefix = ","
+                    for x in values[i * chunk_size:]:
+                        chunk_values = np.concatenate((chunk_values, x), axis=0)
+                else:
+                    for x in values[i * chunk_size:(i + 1) * chunk_size]:
+                        chunk_values = np.concatenate((chunk_values, x), axis=0)
+                cursor.execute(query, tuple(chunk_values))
+
+        return execute_sql_transaction(callback, data)
+
+    @staticmethod
+    def delete(table_name, id):
+        def callback(conn, cursor):
+            cursor.execute(f"DELETE FROM {table_name}  WHERE id = %s", [id])
+
+        return execute_sql(callback)
+
+
+def get_columns(table_name):
+    def callback(conn, cursor):
+        cursor.execute(f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{table_name}'"
+                       f" AND TABLE_SCHEMA = '{os.environ.get('DB_DATABASE')}' ORDER BY ORDINAL_POSITION")
+        return cursor.fetchall()
+
+    result = execute_sql(callback)
+    result = [x['COLUMN_NAME'] for x in result]
+
+    return result
+
+
+def execute_sql(callback):
+    if isinstance(pool, Exception):
+        raise pool
+        return
+    db_exception = None
+    conn = None
+    cursor = None
+    try:
+        conn = pool.get_connection()
+        cursor = conn.cursor(dictionary=True)
+        result = callback(conn, cursor)
+        conn.commit()
+    except Exception as e:
+        traceback.print_exc()
+        db_exception = e
+    if cursor is not None:
+        cursor.close()
+    if conn is not None:
+        conn.close()
+    if db_exception is not None:
+        raise db_exception
+    return result
+
+
+def execute_sql_transaction(callback, *args):
+    if isinstance(pool, Exception):
+        raise pool
+        return
+    db_exception = None
+    conn = None
+    cursor = None
+    try:
+        conn = pool.get_connection()
+        cursor = conn.cursor(prepared=True)
+        conn.start_transaction()
+        result = callback(conn, cursor, *args)
+        conn.commit()
+    except Exception as e:
+        if conn is not None:
+            conn.rollback()
+        traceback.print_exc()
+        db_exception = e
+    if cursor is not None:
+        cursor.close()
+    if conn is not None:
+        conn.close()
+    if db_exception is not None:
+        raise db_exception
+    return result
+
+
+class InternalProgrammingError(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)

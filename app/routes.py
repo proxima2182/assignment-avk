@@ -1,21 +1,15 @@
 import json
 import traceback
 from functools import wraps
-from json import JSONEncoder
 
-from flask import Response
+import pandas as pd
+from flask import Response, request
 from flask_restx import Resource
 
 from app import api
 from app.database import Database
 
 assignment_api = api.namespace('', description='사전 과제 API')
-
-
-class MyEncoder(JSONEncoder):
-    def default(self, o):
-        print(self)
-        return o.__dict__
 
 
 def as_json(f):
@@ -35,9 +29,8 @@ class Read(Resource):
         response = {
             'success': False,
         }
-
         try:
-            result = Database.read("SELECT * FROM user where id=%s", [id]);
+            result = Database.read('user', id);
             if len(result) == 0:
                 response.update({
                     'reason': 'Not Exist.',
@@ -48,10 +41,57 @@ class Read(Resource):
                     'data': result[0]
                 })
         except Exception as e:
+            traceback.print_exc()
             response.update({
                 'reason': type(e).__name__,
             })
+        return response
+
+
+@assignment_api.route('/create')
+class Create(Resource):
+    @as_json
+    def post(self):
+        response = {
+            'success': False,
+        }
+        data = request.json.get('data')
+        # data = [
+        #     {"created": datetime(2023, 1, 1, 12, 0, 0), "name": "John", "content": b'something'},
+        #     {"created": datetime(2023, 1, 2, 12, 0, 0), "name": "Alice", "content": b'anything'},
+        # ]
+
+        try:
+            Database.write_bulk('user', pd.DataFrame.from_dict(data=data, orient='columns'))
+            response.update({
+                'success': True
+            })
+        except Exception as e:
             traceback.print_exc()
+            response.update({
+                'reason': type(e).__name__,
+            })
+        return response
+
+
+@assignment_api.route('/delete/<int:id>')
+class Create(Resource):
+    @as_json
+    def delete(self, id):
+        response = {
+            'success': False,
+        }
+
+        try:
+            Database.delete('user', id)
+            response.update({
+                'success': True
+            })
+        except Exception as e:
+            traceback.print_exc()
+            response.update({
+                'reason': type(e).__name__,
+            })
         return response
 
 # @assignment_api.get('/insert_test')
