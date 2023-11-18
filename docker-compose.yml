@@ -1,0 +1,46 @@
+version: '3.6'
+
+services:
+  database:
+    container_name: assignment_db
+    # We use a mariadb image which supports both amd64 & arm64 architecture
+    image: mariadb:10-focal
+    # If you really want to use MySQL, uncomment the following line
+    #image: mysql:8
+    command: '--default-authentication-plugin=mysql_native_password'
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --password="$$(cat /run/secrets/db-password)" --silent']
+      interval: 3s
+      retries: 5
+      start_period: 30s
+    secrets:
+      - db-password
+    volumes:
+      - ./database/db:/var/lib/mysql
+      - ./database/initdb.d:/docker-entrypoint-initdb.d
+      - ./database/conf.d:/etc/mysql/conf.d
+    environment:
+      TZ : Asia/Seoul
+      MYSQL_DATABASE : assignment_db
+      MYSQL_ROOT_PASSWORD_FILE : /run/secrets/db-password
+    ports:
+      - "7010:3306"
+
+  application:
+    container_name: assignment_app
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "7000:7000"
+    links:
+      - "database:assignment_db"
+    depends_on:
+      - database
+
+
+secrets:
+  db-password:
+    file: database/password.txt
