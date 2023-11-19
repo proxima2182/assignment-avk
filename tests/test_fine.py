@@ -4,7 +4,7 @@ import sys
 import unittest
 from datetime import datetime
 
-import app
+import src
 
 
 # to make order for test
@@ -33,7 +33,7 @@ logger.addHandler(stream_handler)
 
 class UnitTest(unittest.TestCase):
     def setUp(self):
-        self.app = app.app
+        self.app = src.app
         self.app.config['TESTING'] = True
         self.app = self.app.test_client()
 

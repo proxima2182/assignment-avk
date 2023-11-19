@@ -30,7 +30,7 @@ services:
   application:
     container_name: assignment_app
     build:
-      context: ./app
+      context: ./src
       dockerfile: Dockerfile
     restart: always
     ports:
