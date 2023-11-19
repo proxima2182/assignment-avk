@@ -15,5 +15,7 @@ EXPOSE 7000
 
 # install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+# create package info to make test script know root directory
+RUN pip install -e .
 
 CMD ["flask", "run"]

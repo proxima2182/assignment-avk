@@ -1,5 +1,7 @@
+import logging
 import math
 import os
+import sys
 import traceback
 from datetime import datetime
 
@@ -7,23 +9,53 @@ import mysql.connector
 import mysql.connector.pooling
 import numpy as np
 
-try:
-    config = {
-        'host': os.environ.get('DB_HOST'),
-        'port': os.environ.get('DB_PORT'),
-        'user': os.environ.get('DB_USERNAME'),
-        'password': os.environ.get('DB_PASSWORD'),
-        'database': os.environ.get('DB_DATABASE'),
-        'charset': 'utf8',
-    }
-    pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="database", pool_size=3,
-                                                       auth_plugin='mysql_native_password', **config)
-except Exception as e:
-    pool = e
-    traceback.print_exc()
+from app import app
 
 
+class DatabasePool:
+    def __new__(cls):
+        if hasattr(cls, 'instance'):
+            return cls.instance
+        try:
+            #     os.environ.setdefault('DB_HOST', 'localhost')
+            #     os.environ.setdefault('DB_PORT', '7010')
+            #     os.environ.setdefault('DB_USERNAME', 'root')
+            #     os.environ.setdefault('DB_PASSWORD', 'password!@#$')
+            #     os.environ.setdefault('DB_DATABASE', 'assignment_db')
+            #     # config = {
+            #     #     'host': 'localhost',
+            #     #     'port': '7010',
+            #     #     'user': 'root',
+            #     #     # 'password': 'test',
+            #     #     # 'database': 'assignment_db_test',
+            #     #     'password': 'password!@#$',
+            #     #     'database': 'assignment_db',
+            #     #     'charset': 'utf8',
+            #     # }
+            config = {
+                'host': os.environ.get('DB_HOST'),
+                'port': os.environ.get('DB_PORT'),
+                'user': os.environ.get('DB_USERNAME'),
+                'password': os.environ.get('DB_PASSWORD'),
+                'database': os.environ.get('DB_DATABASE'),
+                'charset': 'utf8',
+            }
+            if app.config['TESTING'] is True:
+                config.update({'database': os.environ.get('DB_TEST_DATABASE')})
+            cls.instance = mysql.connector.pooling.MySQLConnectionPool(pool_name="database", pool_size=3,
+                                                                         auth_plugin='mysql_native_password',
+                                                                         **config)
+        except Exception as e:
+            cls.instance = e
+            traceback.print_exc()
+        return cls.instance
+
+logger = logging.getLogger()
+logger.level = logging.DEBUG
+stream_handler = logging.StreamHandler(sys.stdout)
+logger.addHandler(stream_handler)
 class Database:
+
     @staticmethod
     def read(table_name, id):
         def callback(conn, cursor):
@@ -118,7 +150,7 @@ class Database:
             values = []
             prefix = ""
             for column in columns:
-                if column is not 'id':
+                if column != 'id':
                     query += prefix + f"{column}=?"
                     values.append(data[column])
                     prefix = ","
@@ -148,6 +180,7 @@ def get_columns(table_name):
 
 
 def execute_sql(callback):
+    pool = DatabasePool()
     if isinstance(pool, Exception):
         raise pool
         return
@@ -172,6 +205,7 @@ def execute_sql(callback):
 
 
 def execute_sql_transaction(callback):
+    pool = DatabasePool()
     if isinstance(pool, Exception):
         raise pool
         return

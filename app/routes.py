@@ -30,7 +30,7 @@ def as_json(f):
 api_update_user_fields = api.model('UpdateUser', {
     'created': fields.String(description="DateTime", default="yyyy-MM-dd HH:mm:ss"),
     # 'created': fields.DateTime,
-    'name': fields.String(max_length=100),
+    'name': fields.String(max_length=100, strict=True),
     'content': fields.String,
 })
 api_user_fields = api.inherit('User', api_update_user_fields, {
@@ -46,7 +46,7 @@ user_result_fields = api.inherit('UserDataResult', result_fields, {
 
 
 @assignment_api.route('/read/<int:id>')
-@assignment_api.doc(params={'id': '조회 하고자 하는 row 의 id'})
+@assignment_api.doc(params={'id': 'row id'})
 class Read(Resource):
     @api.response(200, 'Success', user_result_fields)
     @as_json
@@ -102,8 +102,8 @@ class Create(Resource):
 
 
 @assignment_api.route('/update/<int:id>')
-@assignment_api.doc(params={'id': '업데이트 하고자 하는 row 의 id'})
-class Create(Resource):
+@assignment_api.doc(params={'id': 'row id'})
+class Update(Resource):
     @api.expect(api_update_user_fields)
     @api.response(200, 'Success', result_fields)
     @as_json
@@ -127,8 +127,8 @@ class Create(Resource):
 
 
 @assignment_api.route('/delete/<int:id>')
-@assignment_api.doc(params={'id': '삭제 하고자 하는 row 의 id'})
-class Create(Resource):
+@assignment_api.doc(params={'id': 'row id'})
+class Delete(Resource):
     @api.response(200, 'Success', result_fields)
     @as_json
     def delete(self, id):
