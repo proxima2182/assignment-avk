@@ -1,7 +1,5 @@
-import logging
 import math
 import os
-import sys
 import traceback
 from datetime import datetime
 
@@ -11,32 +9,12 @@ import numpy as np
 
 from app import app
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
-stream_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(stream_handler)
-
 
 class DatabasePool:
     def __new__(cls):
         if hasattr(cls, 'instance'):
             return cls.instance
         try:
-            #     os.environ.setdefault('DB_HOST', 'localhost')
-            #     os.environ.setdefault('DB_PORT', '7010')
-            #     os.environ.setdefault('DB_USERNAME', 'root')
-            #     os.environ.setdefault('DB_PASSWORD', 'password!@#$')
-            #     os.environ.setdefault('DB_DATABASE', 'assignment_db')
-            #     # config = {
-            #     #     'host': 'localhost',
-            #     #     'port': '7010',
-            #     #     'user': 'root',
-            #     #     # 'password': 'test',
-            #     #     # 'database': 'assignment_db_test',
-            #     #     'password': 'password!@#$',
-            #     #     'database': 'assignment_db',
-            #     #     'charset': 'utf8',
-            #     # }
             config = {
                 'host': os.environ.get('DB_HOST'),
                 'port': os.environ.get('DB_PORT'),

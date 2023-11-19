@@ -17,4 +17,4 @@ EXPOSE 7000
 RUN pip install --no-cache-dir -r requirements.txt
 # create package info to make test script know root directory
 
-CMD ["flask", "run"]
+CMD ["flask", "run", "--no-reload"]

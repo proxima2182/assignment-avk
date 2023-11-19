@@ -1,6 +1,4 @@
 import json
-import logging
-import sys
 import traceback
 from functools import wraps
 
@@ -12,11 +10,6 @@ from app import api
 from app.database import Database
 
 assignment_api = api.namespace('', description='사전 과제 API')
-
-logger = logging.getLogger()
-logger.level = logging.DEBUG
-stream_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(stream_handler)
 
 
 def as_json(f):

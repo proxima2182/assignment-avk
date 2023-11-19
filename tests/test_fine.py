@@ -31,7 +31,7 @@ stream_handler = logging.StreamHandler(sys.stdout)
 logger.addHandler(stream_handler)
 
 
-class MyUnitTest(unittest.TestCase):
+class UnitTest(unittest.TestCase):
     def setUp(self):
         self.app = app.app
         self.app.config['TESTING'] = True
@@ -51,7 +51,6 @@ class MyUnitTest(unittest.TestCase):
         response = self.app.post('/create',
                                  data=json.dumps(self.create_data, ensure_ascii=False, default=str),
                                  content_type="application/json")
-
         data = json.loads(response.get_data())
         self.assertEqual(True, data['success'])
 
