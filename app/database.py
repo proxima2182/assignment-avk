@@ -11,6 +11,11 @@ import numpy as np
 
 from app import app
 
+logger = logging.getLogger()
+logger.level = logging.DEBUG
+stream_handler = logging.StreamHandler(sys.stdout)
+logger.addHandler(stream_handler)
+
 
 class DatabasePool:
     def __new__(cls):
@@ -43,17 +48,14 @@ class DatabasePool:
             if app.config['TESTING'] is True:
                 config.update({'database': os.environ.get('DB_TEST_DATABASE')})
             cls.instance = mysql.connector.pooling.MySQLConnectionPool(pool_name="database", pool_size=3,
-                                                                         auth_plugin='mysql_native_password',
-                                                                         **config)
+                                                                       auth_plugin='mysql_native_password',
+                                                                       **config)
         except Exception as e:
             cls.instance = e
             traceback.print_exc()
         return cls.instance
 
-logger = logging.getLogger()
-logger.level = logging.DEBUG
-stream_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(stream_handler)
+
 class Database:
 
     @staticmethod
@@ -67,13 +69,7 @@ class Database:
         for row in rows:
             data = {}
             for key in row:
-                value = row[key]
-                if isinstance(value, bytes) or isinstance(value, bytearray):
-                    data[key] = value.decode('utf-8')
-                elif isinstance(value, datetime):
-                    data[key] = value.strftime("%Y-%m-%d, %H:%M:%S")
-                else:
-                    data[key] = value
+                data[key] = parse_string(row[key])
             json_data.append(data)
         return json_data
 
@@ -167,6 +163,18 @@ class Database:
         return execute_sql(callback)
 
 
+# string parser for json result
+def parse_string(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    if isinstance(value, bytearray):
+        value = bytes(value).decode('utf-8')
+    elif isinstance(value, datetime):
+        value = value.strftime("%Y-%m-%d, %H:%M:%S")
+    return value
+
+
+# to check inserted data keys are same with database column
 def get_columns(table_name):
     def callback(conn, cursor):
         cursor.execute(f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{table_name}'"
