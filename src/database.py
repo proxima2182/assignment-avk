@@ -25,6 +25,28 @@ class DatabasePool:
             }
             if app.config['TESTING'] is True:
                 config.update({'database': os.environ.get('DB_TEST_DATABASE')})
+            cls.instance = mysql.connector.pooling.MySQLConnectionPool(pool_name="database", pool_size=5,
+                                                                       auth_plugin='mysql_native_password',
+                                                                       **config)
+        except Exception as e:
+            cls.instance = e
+            traceback.print_exc()
+        return cls.instance
+
+
+class TestDatabasePool:
+    def __new__(cls):
+        if hasattr(cls, 'instance'):
+            return cls.instance
+        try:
+            config = {
+                'host': os.environ.get('DB_HOST'),
+                'port': os.environ.get('DB_PORT'),
+                'user': os.environ.get('DB_USERNAME'),
+                'password': os.environ.get('DB_PASSWORD'),
+                'database': os.environ.get('DB_TEST_DATABASE'),
+                'charset': 'utf8',
+            }
             cls.instance = mysql.connector.pooling.MySQLConnectionPool(pool_name="database", pool_size=3,
                                                                        auth_plugin='mysql_native_password',
                                                                        **config)
@@ -37,12 +59,12 @@ class DatabasePool:
 class Database:
 
     @staticmethod
-    def read(table_name, id):
+    def read(table_name, id, isTest=False):
         def callback(conn, cursor):
             cursor.execute(f"SELECT * FROM {table_name} where id = {id}")
             return cursor.fetchall()
 
-        rows = execute_sql(callback)
+        rows = execute_sql(callback, isTest)
         json_data = []
         for row in rows:
             data = {}
@@ -52,7 +74,7 @@ class Database:
         return json_data
 
     @staticmethod
-    def insert_bulk(table_name, data, chunk_size=1000):
+    def insert_bulk(table_name, data, isTest=False, chunk_size=1000):
         def callback(conn, cursor):
             table_columns = get_columns(table_name)
             data_columns = data.keys().values
@@ -103,10 +125,10 @@ class Database:
                         chunk_values = np.concatenate((chunk_values, x), axis=0)
                 cursor.execute(query, tuple(chunk_values))
 
-        return execute_sql_transaction(callback)
+        return execute_sql_transaction(callback, isTest)
 
     @staticmethod
-    def update(table_name, id, data):
+    def update(table_name, id, data, isTest=False):
         def callback(conn, cursor):
             table_columns = get_columns(table_name)
             data_columns = list(data.keys())
@@ -131,14 +153,14 @@ class Database:
 
             cursor.execute(f"UPDATE {table_name} SET {query} WHERE id = {id}", values)
 
-        return execute_sql_transaction(callback)
+        return execute_sql_transaction(callback, isTest)
 
     @staticmethod
-    def delete(table_name, id):
+    def delete(table_name, id, isTest=False):
         def callback(conn, cursor):
             cursor.execute(f"DELETE FROM {table_name} WHERE id = {id}")
 
-        return execute_sql(callback)
+        return execute_sql(callback, isTest)
 
 
 # string parser for json result
@@ -165,8 +187,8 @@ def get_columns(table_name):
     return result
 
 
-def execute_sql(callback):
-    pool = DatabasePool()
+def execute_sql(callback, isTest=False):
+    pool = TestDatabasePool() if isTest else TestDatabasePool()
     if isinstance(pool, Exception):
         raise pool
         return
@@ -190,8 +212,8 @@ def execute_sql(callback):
     return result
 
 
-def execute_sql_transaction(callback):
-    pool = DatabasePool()
+def execute_sql_transaction(callback, isTest=False):
+    pool = TestDatabasePool() if isTest else TestDatabasePool()
     if isinstance(pool, Exception):
         raise pool
         return

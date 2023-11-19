@@ -4,7 +4,7 @@ import sys
 import unittest
 from datetime import datetime
 
-import src
+import requests
 
 
 # to make order for test
@@ -33,9 +33,11 @@ logger.addHandler(stream_handler)
 
 class UnitTest(unittest.TestCase):
     def setUp(self):
-        self.app = src.app
-        self.app.config['TESTING'] = True
-        self.app = self.app.test_client()
+        # self.app = src.app
+        # self.app.config['TESTING'] = True
+        # self.app = self.app.test_client()
+        self.host = 'http://localhost:7000'
+        self.headers = {'Content-Type': 'application/json; charset=utf-8'}
 
         self.create_data = [
             {"id": 1004, "created": datetime(2023, 1, 1, 12, 0, 0), "name": "John", "content": "something"},
@@ -48,17 +50,31 @@ class UnitTest(unittest.TestCase):
 
     @ordered
     def test_create(self):
-        response = self.app.post('/create',
+        # on local
+        # response = self.app.post('/create',
+        #                          data=json.dumps(self.create_data, ensure_ascii=False, default=str),
+        #                          content_type="application/json")
+        # response_data = json.loads(response.get_data())
+        response = requests.post(f'{self.host}/create',
                                  data=json.dumps(self.create_data, ensure_ascii=False, default=str),
-                                 content_type="application/json")
-        data = json.loads(response.get_data())
-        self.assertEqual(True, data['success'])
+                                 headers=self.headers,
+                                 params={
+                                     'is-test': 'true'
+                                 })
+        response_data = response.json()
+        self.assertEqual(True, response_data['success'])
 
     @ordered
     def test_read(self):
         for item in self.create_data:
-            response = self.app.get(f"/read/{item['id']}")
-            response_data = json.loads(response.get_data())
+            # on local
+            # response = self.app.get(f"/read/{item['id']}")
+            # response_data = json.loads(response.get_data())
+            response = requests.get(f"{self.host}/read/{item['id']}",
+                                    params={
+                                        'is-test': 'true'
+                                    })
+            response_data = response.json()
             self.assertEqual(True, response_data['success'])
             data = response_data['data']
             for key in item.keys():
@@ -67,17 +83,31 @@ class UnitTest(unittest.TestCase):
     @ordered
     def test_update(self):
         for item in self.update_data:
-            response = self.app.put(f"/update/{item['id']}",
+            # on local
+            # response = self.app.put(f"/update/{item['id']}",
+            #                         data=json.dumps(item, ensure_ascii=False, default=str),
+            #                         content_type="application/json")
+            # response_data = json.loads(response.get_data())
+            response = requests.put(f"{self.host}/update/{item['id']}",
                                     data=json.dumps(item, ensure_ascii=False, default=str),
-                                    content_type="application/json")
-            response_data = json.loads(response.get_data())
+                                    headers=self.headers,
+                                    params={
+                                        'is-test': 'true'
+                                    })
+            response_data = response.json()
             self.assertEqual(True, response_data['success'])
 
     @ordered
     def test_read_after_update(self):
         for item in self.update_data:
-            response = self.app.get(f"/read/{item['id']}")
-            response_data = json.loads(response.get_data())
+            # on local
+            # response = self.app.get(f"/read/{item['id']}")
+            # response_data = json.loads(response.get_data())
+            response = requests.get(f"{self.host}/read/{item['id']}",
+                                    params={
+                                        'is-test': 'true'
+                                    })
+            response_data = response.json()
             self.assertEqual(True, response_data['success'])
             data = response_data['data']
             for key in item.keys():
@@ -86,9 +116,15 @@ class UnitTest(unittest.TestCase):
     @ordered
     def test_delete(self):
         for item in self.create_data:
-            response = self.app.delete(f"/delete/{item['id']}")
-            data = json.loads(response.get_data())
-            self.assertEqual(True, data['success'])
+            # on local
+            # response = self.app.delete(f"/delete/{item['id']}")
+            # response_data = json.loads(response.get_data())
+            response = requests.delete(f"{self.host}/delete/{item['id']}",
+                                       params={
+                                           'is-test': 'true'
+                                       })
+            response_data = response.json()
+            self.assertEqual(True, response_data['success'])
 
 
 # string parser for json result

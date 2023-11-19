@@ -54,8 +54,11 @@ class Read(Resource):
         response = {
             'success': False,
         }
+        args = request.args
+        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
+        print(args)
         try:
-            result = Database.read('user', id);
+            result = Database.read('user', id, isTest)
             if len(result) == 0:
                 response.update({
                     'reason': 'Not Exist.',
@@ -84,13 +87,15 @@ class Create(Resource):
             'success': False,
         }
         data = request.json
+        args = request.args
+        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
         # data = [
         #     {"created": datetime(2023, 1, 1, 12, 0, 0), "name": "John", "content": b'something'},
         #     {"created": datetime(2023, 1, 2, 12, 0, 0), "name": "Alice", "content": b'anything'},
         # ]
 
         try:
-            Database.insert_bulk('user', pd.DataFrame.from_dict(data=data, orient='columns'))
+            Database.insert_bulk('user', pd.DataFrame.from_dict(data=data, orient='columns'), isTest)
             response.update({
                 'success': True
             })
@@ -114,9 +119,11 @@ class Update(Resource):
             'success': False,
         }
         data = request.json
+        args = request.args
+        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
 
         try:
-            Database.update("user", id, data)
+            Database.update("user", id, data, isTest)
             response.update({
                 'success': True
             })
@@ -138,9 +145,11 @@ class Delete(Resource):
         response = {
             'success': False,
         }
+        args = request.args
+        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
 
         try:
-            Database.delete('user', id)
+            Database.delete('user', id, isTest)
             response.update({
                 'success': True
             })
