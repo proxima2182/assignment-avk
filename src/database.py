@@ -188,7 +188,7 @@ def get_columns(table_name):
 
 
 def execute_sql(callback, isTest=False):
-    pool = TestDatabasePool() if isTest else TestDatabasePool()
+    pool = TestDatabasePool() if isTest else DatabasePool()
     if isinstance(pool, Exception):
         raise pool
         return
@@ -213,7 +213,7 @@ def execute_sql(callback, isTest=False):
 
 
 def execute_sql_transaction(callback, isTest=False):
-    pool = TestDatabasePool() if isTest else TestDatabasePool()
+    pool = TestDatabasePool() if isTest else DatabasePool()
     if isinstance(pool, Exception):
         raise pool
         return

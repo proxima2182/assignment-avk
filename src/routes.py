@@ -54,8 +54,8 @@ class Read(Resource):
         response = {
             'success': False,
         }
-        args = request.args
-        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
+        args = request.args.get('is-test', None)
+        isTest = args == 'true'
         print(args)
         try:
             result = Database.read('user', id, isTest)
@@ -72,7 +72,6 @@ class Read(Resource):
             traceback.print_exc()
             response.update({
                 'reason': type(e).__name__,
-                'exception': traceback.format_exc()
             })
         return response
 
@@ -87,8 +86,8 @@ class Create(Resource):
             'success': False,
         }
         data = request.json
-        args = request.args
-        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
+        args = request.args.get('is-test', None)
+        isTest = args == 'true'
         # data = [
         #     {"created": datetime(2023, 1, 1, 12, 0, 0), "name": "John", "content": b'something'},
         #     {"created": datetime(2023, 1, 2, 12, 0, 0), "name": "Alice", "content": b'anything'},
@@ -103,7 +102,6 @@ class Create(Resource):
             traceback.print_exc()
             response.update({
                 'reason': type(e).__name__,
-                'exception': traceback.format_exc()
             })
         return response
 
@@ -119,8 +117,8 @@ class Update(Resource):
             'success': False,
         }
         data = request.json
-        args = request.args
-        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
+        args = request.args.get('is-test', None)
+        isTest = args == 'true'
 
         try:
             Database.update("user", id, data, isTest)
@@ -131,7 +129,6 @@ class Update(Resource):
             traceback.print_exc()
             response.update({
                 'reason': type(e).__name__,
-                'exception': traceback.format_exc()
             })
         return response
 
@@ -145,8 +142,8 @@ class Delete(Resource):
         response = {
             'success': False,
         }
-        args = request.args
-        isTest = False if args['is-test'] is None else args['is-test'] == 'true'
+        args = request.args.get('is-test', None)
+        isTest = args == 'true'
 
         try:
             Database.delete('user', id, isTest)
@@ -157,6 +154,5 @@ class Delete(Resource):
             traceback.print_exc()
             response.update({
                 'reason': type(e).__name__,
-                'exception': traceback.format_exc()
             })
         return response

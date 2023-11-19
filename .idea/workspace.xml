@@ -4,15 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a0f803ea-68dc-4b23-b5b7-25965724c568" name="Changes" comment="Fix(error) : data connection in docker">
+    <list default="true" id="a0f803ea-68dc-4b23-b5b7-25965724c568" name="Changes" comment="Change(test) : change test access point to docker application">
       <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/.idea/workspace.xml" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/database/db/ddl_recovery.log" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/database/db/ddl_recovery.log" afterDir="false" />
+      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/assignment.egg-info/PKG-INFO" beforeDir="false" />
+      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/assignment.egg-info/SOURCES.txt" beforeDir="false" />
+      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/assignment.egg-info/dependency_links.txt" beforeDir="false" />
+      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/assignment.egg-info/top_level.txt" beforeDir="false" />
       <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/database/db/ib_logfile0" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/database/db/ib_logfile0" afterDir="false" />
-      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/__init__.py" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/__init__.py" afterDir="false" />
       <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/database.py" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/database.py" afterDir="false" />
-      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/requirements.txt" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/requirements.txt" afterDir="false" />
       <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/routes.py" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/src/routes.py" afterDir="false" />
-      <change beforePath="$USER_HOME$/Documents/Develop/PyCharm/assignment/tests/test_fine.py" beforeDir="false" afterPath="$USER_HOME$/Documents/Develop/PyCharm/assignment/tests/test_fine.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,7 +159,7 @@
       <workItem from="1700286559044" duration="5599000" />
       <workItem from="1700294484340" duration="22982000" />
       <workItem from="1700365586973" duration="13659000" />
-      <workItem from="1700379858583" duration="12713000" />
+      <workItem from="1700379858583" duration="14744000" />
     </task>
     <task id="LOCAL-00001" summary="- first commit -">
       <option name="closed" value="true" />
@@ -249,7 +249,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700390359649</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Change(test) : change test access point to docker application">
+      <option name="closed" value="true" />
+      <created>1700392903230</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1700392903230</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -286,10 +294,11 @@
     <MESSAGE value="Fix(error) : process duplication" />
     <MESSAGE value="-" />
     <MESSAGE value="Fix(error) : data connection in docker" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix(error) : data connection in docker" />
+    <MESSAGE value="Change(test) : change test access point to docker application" />
+    <option name="LAST_COMMIT_MESSAGE" value="Change(test) : change test access point to docker application" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/assignment$main.coverage" NAME="main 커버리지 결과" MODIFIED="1700209382176" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Documents/Develop/PyCharm/assignment" />
-    <SUITE FILE_PATH="coverage/assignment$flask.coverage" NAME="flask 커버리지 결과" MODIFIED="1700392374459" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Documents/Develop/PyCharm/assignment" />
+    <SUITE FILE_PATH="coverage/assignment$flask.coverage" NAME="flask 커버리지 결과" MODIFIED="1700395100850" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Documents/Develop/PyCharm/assignment" />
   </component>
 </project>
